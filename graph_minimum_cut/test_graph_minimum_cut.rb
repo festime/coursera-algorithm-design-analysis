@@ -66,7 +66,7 @@ class TestGraphMinimumCut < Minitest::Test
     )
   end
 
-  def test_on_test_input
-    puts GraphMinimumCut.new(file_name: './graph_minimum_cut/test_input.txt').run
-  end
+  # def test_on_test_input
+    # puts GraphMinimumCut.new(file_name: './graph_minimum_cut/test_input.txt').run
+  # end
 end
