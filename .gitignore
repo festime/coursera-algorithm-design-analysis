@@ -1,1 +1,8 @@
+# vim temp file
 *.swp
+
+# Scala compiled files in this directory
+target/
+
+# Eclipse IDE settings and version
+.metadata/
