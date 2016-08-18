@@ -6,3 +6,6 @@ target/
 
 # Eclipse IDE settings and version
 .metadata/
+
+*/.cache-main
+*/.cache-tests
