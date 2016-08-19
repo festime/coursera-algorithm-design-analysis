@@ -37,26 +37,16 @@ class DijkstraAlgorithm(inputFile: String = "input_text.txt") {
 //  val shortestDistances = run
   val shortestDistances = runWithHeap
 
-//  class Vertex(val value: Int, val score: Int = 0) extends Ordered[Vertex] with Equals {
-  class Vertex(val value: Int, val score: Int = 0) extends Equals with Ordered[Vertex]{
+  class Vertex(val value: Int, val score: Int = 0) extends Ordered[Vertex] {
     def compare(that: Vertex): Int = {
       this.score compare that.score
     }
 
-    override def hashCode = value.hashCode
+    override def hashCode = value
 
-    def canEqual(that: Any): Boolean = that match {
-      case v: Vertex => true
+    override def equals(that: Any): Boolean = that match {
+      case that: Vertex => this.value == that.value
       case _ => false
-    }
-
-    override def equals(that: Any): Boolean = {
-      def strictEquals(other: Vertex) = this.value == other.value
-
-      that match {
-        case v: Vertex => v.canEqual(this) && strictEquals(v)
-        case _ => false
-      }
     }
 
     override def toString() = value.toString + "@" + score.toString
@@ -90,7 +80,6 @@ class DijkstraAlgorithm(inputFile: String = "input_text.txt") {
                 .insert(new Vertex(adjacentVertex, minScoreVertex.score + edgeLength))
 
             } else {
-//              println("    " + option.get)
               unprocessedVerticesHeap.insert(option.get)
             }
 
