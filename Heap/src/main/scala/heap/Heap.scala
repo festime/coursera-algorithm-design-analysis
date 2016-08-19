@@ -70,6 +70,8 @@ class Heap[T <% Ordered[T]] {
     bubbleUp()
   }
 
+  def nonEmpty(): Boolean = toArrayBuffer.nonEmpty
+
   private def lastIndex: Int = heapRepresentation.length - 1
   private def parentIndex(nodeIndex: Int): Int = (nodeIndex - 1) / 2
   private def leftChildIndex(nodeIndex: Int): Int = (nodeIndex + 1) * 2 - 1
