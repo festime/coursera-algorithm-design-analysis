@@ -7,5 +7,18 @@ target/
 # Eclipse IDE settings and version
 .metadata/
 
+# IntelliJ IDEA stores information about modules the project includes
+# in %module_name%.iml files
+*.iml
+
+# For directory-based format projects,
+# the project and workspace settings are stored in
+# a number of XML files under the %project_home_directory%/.idea directory.
+#
+# Each XML file is responsible for its own set of settings and
+# can be recognized by its name:
+# projectCodeStyle.xml, encodings.xml, vcs.xml etc.
+# .idea/
+
 */.cache-main
 */.cache-tests
