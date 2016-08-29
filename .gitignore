@@ -18,7 +18,7 @@ target/
 # Each XML file is responsible for its own set of settings and
 # can be recognized by its name:
 # projectCodeStyle.xml, encodings.xml, vcs.xml etc.
-# .idea/
+.idea/
 
 */.cache-main
 */.cache-tests
