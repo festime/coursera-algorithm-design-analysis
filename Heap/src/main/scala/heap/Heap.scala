@@ -68,6 +68,7 @@ class Heap[T <% Ordered[T]] {
   def insert(n: T) = {
     append(n)
     bubbleUp()
+    this
   }
 
   def nonEmpty(): Boolean = toArrayBuffer.nonEmpty

@@ -2,11 +2,23 @@ package mst
 
 import scala.io.Source
 import collection.mutable.{ArrayBuffer, HashMap}
+import heap._
 
 class Edge(val u: Int, val v: Int, val cost: Int) extends Ordered[Edge] {
   override def toString: String = u + " -> " + v + " $" + cost
 
   def compare(that: Edge): Int = this.cost compare that.cost
+}
+
+class Vertex(val label: Int, val minCost: Int) extends Ordered[Vertex] {
+  def compare(that: Vertex): Int = this.minCost compare that.minCost
+
+  override def hashCode: Int = label
+
+  override def equals(that: Any): Boolean = that match {
+    case that: Vertex => this.label == that.label
+    case _ => false
+  }
 }
 
 class PrimAlgorithm(inputFile: String) {
@@ -46,12 +58,65 @@ class PrimAlgorithm(inputFile: String) {
   assert(numberOfVertices == 500)
   assert(numberOfEdges == 2184, numberOfEdges)
 
-  def run(): Int = {
-    for ((u, a) <- adjacencyList) {
-      for (edge <- a)
-        assert(edge.u == u)
-      assert(explored(u) == false)
+  def runWithHeap(): Int = {
+    def initializeHeap(source: Int) = {
+      @annotation.tailrec
+      def f(vertices: List[Int], heap: Heap[Vertex]): Heap[Vertex] = vertices match {
+        case Nil => heap
+        case v :: verticesTail => {
+          val edges = adjacencyList(source) filter {
+            edge => edge.u == source && edge.v == v
+          }
+
+          if (edges.isEmpty)
+            f(verticesTail, heap.insert(new Vertex(v, Int.MaxValue)))
+          else
+            f(verticesTail, heap.insert(new Vertex(v, edges.head.cost)))
+        }
+      }
+
+      f((explored.keys.toSet - source).toList, new Heap[Vertex])
     }
+
+    @annotation.tailrec
+    def findMinimumSpanningTree(verticesHeap: Heap[Vertex], totalCost: Int): Int = verticesHeap.nonEmpty match {
+      case true => {
+        val minVertex = verticesHeap.extractMin()
+        val u = minVertex.label
+
+        for (edge <- adjacencyList(u)) {
+          val v = edge.v
+          val cost = edge.cost
+          val option = verticesHeap.delete(new Vertex(v, 0))
+
+          option match {
+            case None =>
+            case Some(vertex: Vertex) => {
+              if (vertex.minCost <= cost) verticesHeap.insert(vertex)
+              else verticesHeap.insert(new Vertex(v, cost))
+            }
+          }
+        }
+
+        findMinimumSpanningTree(verticesHeap, totalCost + minVertex.minCost)
+
+      }
+      case false => totalCost
+    }
+
+    val s = explored.keys.head
+    val verticesHeap = initializeHeap(s)
+    val totalCost = findMinimumSpanningTree(verticesHeap, 0)
+
+    totalCost
+  }
+
+  def run(): Int = {
+//    for ((u, a) <- adjacencyList) {
+//      for (edge <- a)
+//        assert(edge.u == u)
+//      assert(explored(u) == false)
+//    }
     val s = explored.keys.head
     val exploredVertices = ArrayBuffer[Int](s)
     val minimumSpanningTree = ArrayBuffer[Edge]()
@@ -82,9 +147,9 @@ class PrimAlgorithm(inputFile: String) {
         i += 1
       }
 
-      assert(minCostEdge.u != minCostEdge.v, minCostEdge)
-      assert(explored(minCostEdge.u), minCostEdge)
-      assert(!explored(minCostEdge.v), minCostEdge)
+//      assert(minCostEdge.u != minCostEdge.v, minCostEdge)
+//      assert(explored(minCostEdge.u), minCostEdge)
+//      assert(!explored(minCostEdge.v), minCostEdge)
 
       if (minCostEdge.u != minCostEdge.v) {
         explored(minCostEdge.v) = true
@@ -102,4 +167,5 @@ class PrimAlgorithm(inputFile: String) {
 
 object Main extends App {
   println(new PrimAlgorithm("test_input.txt").run)
+  println(new PrimAlgorithm("test_input.txt").runWithHeap)
 }
