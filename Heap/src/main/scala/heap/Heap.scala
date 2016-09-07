@@ -29,6 +29,8 @@ class Heap[T <% Ordered[T]] {
 
   def toArrayBuffer = heapRepresentation
 
+  def size: Int = heapRepresentation.size
+
   def delete(n: T): Option[T] = {
     if (positions.getOrElse(n, ArrayBuffer[T]()).isEmpty) {
       return None
