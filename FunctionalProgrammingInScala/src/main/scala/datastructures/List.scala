@@ -67,6 +67,16 @@ object List {
   /*
    * O(1) running time
    *
+   * 如何用其他方式處理或表達例外，下章節會討論這部分
+   */
+  def head[A](as: List[A]): A = as match {
+    case Nil => throw new Error("head of Nil")
+    case Cons(h, t) => h
+  }
+
+  /*
+   * O(1) running time
+   *
    * Nil 的情況要怎麼處理，值得好好思考，書的下章節會討論到這部分
    */
   def tail[A](as: List[A]): List[A] = as match {
@@ -165,21 +175,246 @@ object List {
    * 1 + (2 + 3)
    * 1 + 5
    * 6
+   *
+   * 圖像化，更容易理解
+   *    +
+   *  /   \
+   * 1      +
+   *      /   \
+   *     2      +
+   *          /   \
+   *         3     0 (給 foldRight curry 化的第二個參數 `某個操作函數` 吃的預設值)
    */
   def sum2(ns: List[Int]) =
     foldRight(ns, 0)((x, y) => x + y)
 
   /*
    * _ * _ 的版本覺得太容易混淆了
-   * 還是明確的寫 (x, y) => x + y 比較合我胃口
+   * 還是明確的寫 (x, y) => x + y 比較明確、合我胃口
    * 之所以 x, y 不用指定型態是因為 Scala 編譯器幫忙推導了
+   *
+   * product2(List(1.0, 2.0, 3.0))
+   *    *
+   *  /   \
+   * 1      *
+   *      /   \
+   *     2      *
+   *          /   \
+   *         3     1 (給 foldRight curry 化的第二個參數 `某個操作函數` 吃的預設值)
+   * 省略小數點，方便直接複製上面的圖小改就好
+   *
+   * 習題有一題問說有沒有可能用 foldRight 實作 product 時
+   * 遇到 0 時就直接回傳 0 不再遞迴下去，省去多餘的計算？
+   * 目前的 foldRight 版本不行！
+   * 因為它一定要先遞迴到 List 最後一個元素
+   * 再倒車一個一個操作
    */
   def product2(ns: List[Double]) =
     foldRight(ns, 1.0)((x, y) => x * y)
     // foldRight(ns, 1.0)(_ * _)
 
+  /*
+   *    +
+   *  /   \
+   * 1      +
+   *      /   \
+   *     1      +
+   *          /   \
+   *         1     0 (給 foldRight curry 化的第二個參數 `某個操作函數` 吃的預設值)
+   * 依照這個圖像化的方式思考
+   * 怎麼實作 length 就一目了然
+   * operation 不再需要第一個參數，一律回傳 1 即可，因為一個元素長度就算 1 而已
+   */
   def length[A](as: List[A]): Int = {
-    foldRight(as, 0)((x, y) => 1 + 1)
+    foldRight(as, 0)((_, accumulation) => 1 + accumulation)
+  }
+
+  /*
+   * e.g.
+   *       +
+   *      / \
+   *     +   3
+   *    / \
+   *   +   2
+   *  / \
+   * 0   1
+   *
+   * 變成 operation 先對 List 開頭的元素操作
+   * 然後依序往後一個一個操作
+   * 很容易寫尾端遞迴的版本
+   */
+  def foldLeft[A, B](as: List[A], z: B)(f: (B, A) => B): B = {
+    @annotation.tailrec
+    def helper(ls: List[A], accumulation: B): B = {
+      ls match {
+        case Nil => accumulation
+        case Cons(h, t) => helper(t, f(accumulation, h))
+      }
+    }
+
+    helper(as, z)
+  }
+
+  def sum3(ns: List[Int]): Int = {
+    foldLeft(ns, 0)((x: Int, y: Int) => x + y)
+  }
+
+  def product3(ns: List[Double]): Double =
+    foldLeft(ns, 1.0)((x: Double, y: Double) => x * y)
+
+  def length3[A](as: List[A]): Int =
+    foldLeft(as, 0)((accumulation, _) => accumulation + 1)
+
+  /*
+   * reverse(List(1, 2, 3))
+   *
+   *           Cons
+   *          /    \
+   *        Cons    3
+   *       /    \
+   *     Cons    2
+   *    /    \
+   * Nil      1
+   *
+   * Nil 是 operation 的運算元之一的起始值
+   * 第一次運算實際上是 Cons(1, Nil)
+   *
+   * 但為了準確表達 foldLeft 的意義
+   * 所以還是用如此順序做圖像化顯示
+   */
+  def reverse[A](as: List[A]): List[A] = {
+    foldLeft(as, Nil: List[A])((y: List[A], x: A) => Cons(x, y))
+  }
+
+  /*
+   *    Cons
+   *   /    \
+   * as(0)   Cons
+   *        /    \
+   *      as(1)   Cons
+   *             /    \
+   *           as(2)   Cons
+   *                  /    \
+   *                as(3)    ...
+   *                            \
+   *                             Cons
+   *                            /    \
+   *                          as(n)   bs
+   */
+  def append2[A](as: List[A], bs: List[A]): List[A] = {
+    foldRight(as, bs)((x: A, xs: List[A]) => Cons(x, xs))
+  }
+
+  /*
+   *    append
+   *   /      \
+   * a(0)      append
+   *          /      \
+   *        a(1)      append
+   *                 /      \
+   *               a(2)      Nil
+   *
+   */
+  def combine[A](a: List[List[A]]): List[A] = {
+    foldRight(a, Nil: List[A])((as: List[A], xs: List[A]) => append2(as, xs))
+  }
+
+  def addOneToEachElement(ns: List[Int]): List[Int] = ns match {
+    case Nil => Nil
+    case Cons(h, t) => Cons(h + 1, addOneToEachElement(t))
+  }
+
+  def doubleToString(ns: List[Double]): List[String] = ns match {
+    case Nil => Nil
+    case Cons(h, t) => Cons(h.toString, doubleToString(t))
+  }
+
+  def map[A, B](as: List[A])(f: A => B): List[B] = as match {
+    case Nil => Nil
+    case Cons(h, t) => Cons(f(h), map(t)(f))
+  }
+
+  def filter[A](as: List[A])(f: A => Boolean): List[A] = as match {
+    case Nil => Nil
+    case Cons(h, t) =>
+      if (f(h)) {
+        Cons(h, filter(t)(f))
+      } else {
+        filter(t)(f)
+      }
+  }
+
+  /*
+   *         append
+   *        /      \
+   *      append    f(as(2))
+   *     /      \
+   *   append    f(as(1))
+   *  /      \
+   * Nil      f(as(0))
+   *
+   * 最下面的 Nil 和 f(as(0))
+   * 其實 f(as(0)) 是 append 的第一個參數， Nil 是第二個參數
+   *
+   * e.g.
+   * flatMap(List(1, 2, 3))(i => List(i, i)) => List(1, 1, 2, 2, 3, 3)
+   */
+  def flatMap[A, B](as: List[A])(f: A => List[B]): List[B] = {
+    foldLeft(as, Nil: List[B])((bs: List[B], a: A) => append(bs, f(a)))
+  }
+
+  def filterByFlatMap[A](as: List[A])(f: A => Boolean): List[A] = {
+    flatMap(as)((a: A) => if (f(a)) List(a) else Nil: List[A])
+  }
+
+  /*
+   *    Cons
+   *   /    \
+   * x1+y1   Cons
+   *        /    \
+   *      x2+y2   Cons
+   *             /    \
+   *           x3+y3   Nil
+   *
+   * 為什麼不能用 foldRight 或 foldLeft ？
+   * 它們兩個接受的第一個參數都是一個 List
+   */
+  def correspondingSum(xs: List[Int], ys: List[Int]): List[Int] = {
+    /*
+     * 奇技淫巧...靈光一閃想到的，想不到真的可以這樣用
+     */
+    (xs, ys) match {
+      case (Nil, Nil) => Nil
+      case (Cons(h1, t2), Nil) => xs
+      case (Nil, Cons(h2, t2)) => ys
+      case (Cons(h1, t1), Cons(h2, t2)) =>
+        Cons(h1 + h2, correspondingSum(t1, t2))
+    }
+  }
+
+  def zipWith[A](xs: List[A], ys: List[A])(f: (A, A) => A): List[A] = {
+    (xs, ys) match {
+      case (Nil, Nil) => Nil
+      case (Cons(h1, t2), Nil) => xs
+      case (Nil, Cons(h2, t2)) => ys
+      case (Cons(h1, t1), Cons(h2, t2)) =>
+        Cons(f(h1, h2), zipWith(t1, t2)(f))
+    }
+  }
+
+  def hasSubsequence[A](as: List[A], sub: List[A]): Boolean = {
+    as match {
+      case Nil =>
+        if (length(sub) == 0)
+          true
+        else
+          false
+      case Cons(h, t) =>
+        if (h == head(sub))
+          hasSubsequence(t, tail(sub))
+        else
+          hasSubsequence(t, sub)
+    }
   }
 }
 
@@ -193,8 +428,8 @@ object Main extends App {
   val x = List(1, 2, 3, 4, 5) match {
     case Cons(x, Cons(2, Cons(4, _))) => x
     case Nil => 42
-    case Cons(h, t) => h + List.sum(t)
     case Cons(x, Cons(y, Cons(3, Cons(4, _)))) => x + y
+    case Cons(h, t) => h + List.sum(t)
     case _ => 101
   }
   println(x)
@@ -217,5 +452,24 @@ object Main extends App {
 //  println(List.init(List(0)))
 
   println(List.foldRight(List(1, 2, 3, 4), Nil: List[Int])(Cons(_, _)))
-  println(List.length(List(0, 1, 2, 3, 4)))
+  println("length = " + List.length(List(0, 1, 2, 3, 4)))
+  println("sum3 of List(1, 2, 3, 4) = " + List.sum3(List(1, 2, 3, 4)))
+  println("product3 of List(2, 3, 4, 5) = " + List.product3(List(2, 3, 4, 5)))
+  println("length 3 of List(1, 2, 3, 4, 5, 6, 7) = " + List.length3(List(1, 2, 3, 4, 5, 6, 7)))
+  println("reverse of List(0, 1, 2, 3)" + List.reverse(List(0, 1, 2, 3)))
+  println("List(0, 1, 2, 3) append List(4, 5, 6) = " + List.append2(List(0, 1, 2, 3), List(4, 5, 6)))
+  println(List.combine(List(List(0), List(1, 2), List(3, 4, 5), List(6, 7, 8, 9))))
+
+  println(List.addOneToEachElement(List(0, 1, 2, 3, 4)))
+  println(List.doubleToString(List(0.0, 1.0, 2.0, 3.0)))
+  println(List.map(List(0, 1, 2, 3, 4))((n: Int) => n + 1))
+  println(List.filter(List(0, 1, 2, 3, 4, 5))((n: Int) => n % 2 == 0))
+  println(List.flatMap(List(1, 2, 3))(i => List(i, i)))
+  println(List.filterByFlatMap(List(0, 1, 2, 3, 4, 5))((n: Int) => n % 2 == 0))
+  println(List.correspondingSum(List(1, 2, 3), List(4, 5, 6)))
+  println(List.correspondingSum(List(1, 2, 3), List(4, 5, 6, 7, 8)))
+  println(List.zipWith(List(1, 2, 3), List(4, 5, 6, 7, 8))((x, y) => x + y))
+
+  println(List.hasSubsequence(List(0, 1, 2, 3, 4), List(2, 4)))
+  println(List.hasSubsequence(List(0, 1, 2, 3, 4), List(2, 6)))
 }
