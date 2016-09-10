@@ -416,6 +416,35 @@ object List {
           hasSubsequence(t, sub)
     }
   }
+
+  /*
+   *        <
+   *       / \
+   *      <   3
+   *     / \
+   *    <   2
+   *   / \
+   * Max  1
+   */
+  def min(ns: List[Int]): Int = {
+    foldLeft(ns, Int.MaxValue)((x: Int, y: Int) => if (x < y) x else y)
+  }
+
+  /*
+   * 用 foldLeft 實作 foldRight
+   * 可以避免初始版本 foldRight 可能發生 stack overflow error 的問題
+   *
+   * 因為 reverse 用 foldLeft 實作
+   * 而 foldLeft 是用尾端遞迴實作
+   * 所以不會有 stack overflow error 的問題
+   *
+   * 一個小小缺點是
+   * 因為 foldRight 和 foldLeft 接受的 operation 函數
+   * 的簽名參數順序不一樣，需要多寫一點點程式碼轉一下
+   */
+  def foldRightViaFoldLeft[A, B](as: List[A], z: B)(f: (A, B) => B): B = {
+    foldLeft(reverse(as), z)((b: B, a: A) => f(a, b))
+  }
 }
 
 object Main extends App {
@@ -472,4 +501,5 @@ object Main extends App {
 
   println(List.hasSubsequence(List(0, 1, 2, 3, 4), List(2, 4)))
   println(List.hasSubsequence(List(0, 1, 2, 3, 4), List(2, 6)))
+  println(List.min(List(1, 2, 0, 3, 4, 5)))
 }
