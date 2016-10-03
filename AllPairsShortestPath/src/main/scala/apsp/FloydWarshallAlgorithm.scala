@@ -87,6 +87,13 @@ class FloydWarshallAlgorithm(inputFile: String) {
     }
 
     /*
+     * n 表示圖的 vertices 數量
+     * 元素有 n ^ 2 個，排序的時間複雜度應該是 O(n ^ 2 (log n)) 才對
+     * 比 O(n ^ 2) 還大！
+     * 下面這註解是錯的！！！！！！！！
+     *
+     *
+     *
      * 找最短的「兩點間最短路徑」長度
      * 先把最終結果 flatten 再排序，最前面的就是最小的
      * 比起迭代兩層迴圈找最小值
@@ -101,14 +108,15 @@ class FloydWarshallAlgorithm(inputFile: String) {
      * 而且若圖有 negative cycle
      * 也不會執行到這裡
      */
-    val minCost = a.flatten.sorted.head
+     // val minCost = a.flatten.sorted.head
 
-//    for (i <- 1 to numVertices) {
-//      for (j <- 1 to numVertices) {
-//        if (a(i)(j) < minCost)
-//          minCost = a(i)(j)
-//      }
-//    }
+    var minCost = PositiveInfinity
+    for (i <- 1 to numVertices) {
+      for (j <- 1 to numVertices) {
+        if (a(i)(j) < minCost)
+          minCost = a(i)(j)
+      }
+    }
 
     println(minCost)
     return Some(minCost)
